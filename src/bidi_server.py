@@ -1,4 +1,3 @@
-import asyncio
 from proto import bidi_pb2_grpc, bidi_pb2
 from google.protobuf.timestamp_pb2 import Timestamp
 from google.protobuf.json_format import MessageToDict
@@ -27,7 +26,7 @@ class BidiService(bidi_pb2_grpc.BidiServiceServicer):
                 yield bidi_pb2.InitialResponse(error=bidi_pb2.Error(description=str(e), errorCode=400, errorType="Missing field(s)"))
                 continue
                 
-            asyncio.run(self.cache.add(message.sessionId, message_data))
+            self.cache.add(message.sessionId, message_data)
             
             resp = bidi_pb2.InitialResponse(success=bidi_pb2.Success(code=1))
             yield resp
@@ -47,7 +46,7 @@ class BidiService(bidi_pb2_grpc.BidiServiceServicer):
                 )
                 continue
 
-            is_session_exist = asyncio.run(self.cache.is_session_exist(sessionId))
+            is_session_exist = self.cache.is_session_exist(sessionId)
             if is_session_exist:
                 
                 # session_data = asyncio.run(self.cache.get(sessionId)) how to get session data
@@ -58,7 +57,7 @@ class BidiService(bidi_pb2_grpc.BidiServiceServicer):
             else:
                 yield bidi_pb2.InitialResponse(
                     error=bidi_pb2.Error(
-                        description=f"No messages for session {sessionId}",
+                        description=f"Session not exist: {sessionId}",
                         errorCode=404,
                         errorType="SessionNotFound"
                     )

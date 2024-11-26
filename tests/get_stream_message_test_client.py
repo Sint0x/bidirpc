@@ -6,6 +6,7 @@ from proto import bidi_pb2_grpc, bidi_pb2
 from google.protobuf.timestamp_pb2 import Timestamp
 from datetime import datetime
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 
 def send_stream_messages():
@@ -32,4 +33,8 @@ def generate_messages():
         time.sleep(1)
 
 if __name__ == '__main__':
-    send_stream_messages()
+    with ThreadPoolExecutor(max_workers=3) as executor:
+        futures = [executor.submit(send_stream_messages) for _ in range(3)]
+
+    for future in futures:
+        future.result()

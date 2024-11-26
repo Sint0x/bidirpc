@@ -16,3 +16,4 @@ gigachat
 tiktoken
 setuptools~=68.2.2
 aiocache~=0.12.3
+cachetools~=5.5.0

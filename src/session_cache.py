@@ -1,22 +1,16 @@
-from aiocache import Cache
-from aiocache.serializers import JsonSerializer
-
+from cachetools import LRUCache
 
 class SessionCache:
     def __init__(self):
-        self.cache = Cache(Cache.MEMORY, serializer=JsonSerializer(), namespace="main")
+        self.cache = LRUCache(maxsize=1024)
 
-    async def get(self, session_id):
-        session_data = await self.cache.get(session_id)
-        if session_data is None:
-            return {"messages": []}
-        return session_data
+    def get(self, session_id):
+        return self.cache.get(session_id, {"messages": []})
 
-    async def add(self, session_id, message):
-        session_data = await self.get(session_id)
+    def add(self, session_id, message):
+        session_data = self.get(session_id)
         session_data["messages"].append(message)
-        await self.cache.set(session_id, session_data)
+        self.cache[session_id] = session_data
         
-    async def is_session_exist(self, session_id):
-        session_data = await self.cache.get(session_id)
-        return not not session_data
+    def is_session_exist(self, session_id):
+        return session_id in self.cache

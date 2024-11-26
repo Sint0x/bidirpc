@@ -4,6 +4,8 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from proto import bidi_pb2_grpc, bidi_pb2
+from concurrent.futures import ThreadPoolExecutor
+
 
 def get_session_data():
     with grpc.insecure_channel('localhost:50051') as channel:
@@ -21,6 +23,8 @@ def generate_session_requests():
         time.sleep(1)
 
 if __name__ == '__main__':
-    for i in range(10):
-        
-        get_session_data()
+    with ThreadPoolExecutor(max_workers=3) as executor:
+        futures = [executor.submit(get_session_data) for _ in range(10)]
+
+    for future in futures:
+        future.result()
