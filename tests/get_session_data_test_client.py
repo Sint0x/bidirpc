@@ -2,19 +2,25 @@ import grpc
 import time
 import sys
 import os
+from multiprocessing import Process, Lock
+from concurrent.futures import ThreadPoolExecutor
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from proto import bidi_pb2_grpc, bidi_pb2
-from concurrent.futures import ThreadPoolExecutor
+
+
+lock = Lock()
 
 
 def get_session_data():
     with grpc.insecure_channel('localhost:50051') as channel:
         stub = bidi_pb2_grpc.BidiServiceStub(channel)
-        for response in stub.GetSessionData(generate_session_requests()):
-            if response.HasField("success"):
-                print(f"Success: {response.success.code}")
-            elif response.HasField("error"):
-                print(f"Error: {response.error.description}, Code: {response.error.errorCode}")
+        with lock:
+            for response in stub.GetSessionData(generate_session_requests()):
+                if response.HasField("success"):
+                    print(f"Success: {response.success.code}")
+                elif response.HasField("error"):
+                    print(f"Error: {response.error.description}, Code: {response.error.errorCode}")
 
 def generate_session_requests():
     session_ids = ["session123"]
@@ -23,8 +29,11 @@ def generate_session_requests():
         time.sleep(1)
 
 if __name__ == '__main__':
-    with ThreadPoolExecutor(max_workers=3) as executor:
-        futures = [executor.submit(get_session_data) for _ in range(10)]
+    processes = []
+    for _ in range(3):
+        process = Process(target=get_session_data)
+        process.start()
+        processes.append(process)
 
-    for future in futures:
-        future.result()
+    for process in processes:
+        process.join()
