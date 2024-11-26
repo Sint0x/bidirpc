@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package bidirectional;
+
+import "google/protobuf/timestamp.proto";
+
+message InitialSessionRequest {
+    string sessionId = 1;
+}
+
+message InitialRequest {
+    string sourceSystem = 1;
+    google.protobuf.Timestamp publicationTime = 2;
+    string sessionId = 3;
+    string messageId = 4;
+    string messageText = 5;
+    string messageWithContext = 6;
+}
+
+message InitialResponse {
+    oneof result {
+        Success success = 1;
+        Error error = 2;
+    }
+}
+
+message Success {
+    int32 code = 1;
+}
+
+message Error {
+    string description = 1;
+    int32 errorCode = 2;
+    string errorType = 3;
+}
+
+service BidiService {
+    rpc GetStreamMessages(stream InitialRequest) returns (stream InitialResponse);
+    rpc GetSessionData(stream InitialSessionRequest) returns (stream InitialResponse);
+}
